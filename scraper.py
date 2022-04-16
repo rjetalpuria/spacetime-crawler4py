@@ -19,7 +19,7 @@ def extract_next_links(url, resp):
     links = list()
     print('url: ', url)
     print('resp.url: ', resp.url)
-    if(resp.status >= 200 or resp.status < 300) and (resp.raw_response is not None):
+    if(resp.status >= 200 and resp.status < 300):
         soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
         for link in soup.find_all('a'):
             links.append(link.get('href'))
