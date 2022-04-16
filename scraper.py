@@ -1,6 +1,9 @@
 import re
 from urllib.parse import urlparse
+from urllib.parse import urldefrag # used to remove the fragment part from url
 from bs4 import BeautifulSoup
+
+valid_domains = ('.ics.uci.edu', '.cs.uci.edu', '.informatics.uci.edu', '.stat.uci.edu')
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -22,7 +25,8 @@ def extract_next_links(url, resp):
     if(resp.status >= 200 and resp.status < 300):
         soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
         for link in soup.find_all('a'):
-            links.append(link.get('href'))
+            if(is_valid(link.get('href'))):
+                links.append(urldefrag(link.get('href'))[0]) #defragment the url before appending
     
     return links
 
@@ -34,6 +38,10 @@ def is_valid(url):
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
             return False
+        if not(parsed.netloc.endswith(valid_domains)): #check if a url falls within our domains
+            return False
+        print(urlparse(url))
+        
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
