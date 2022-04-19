@@ -3,11 +3,26 @@ from urllib.parse import urlparse
 from urllib.parse import urldefrag # used to remove the fragment part from url
 from bs4 import BeautifulSoup
 
+from analyze import TextAnalyzer
+
 valid_domains = ('.ics.uci.edu', '.cs.uci.edu', '.informatics.uci.edu', '.stat.uci.edu')
+
+# {url : text}
+# can be use for report questions after crawling finished
+# nb: may need to switch to creating files to hold webpage content if not enough ram?
+#       Alternatively, come up with a more adhoc solution to report
+webpages = dict()
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
+
+# use soup parser to get textual content
+# saves textual content as one big string and associate it with url in webpages dict
+def aquire_text(soup):
+    # bsoup stipped_strings gives all strings on page without tags
+    # added space keeps words separated after joining
+    webpages[url] = ''.join((s + ' ' for s in soup.stripped_strings))
 
 def extract_next_links(url, resp):
     # Implementation required.
@@ -24,6 +39,9 @@ def extract_next_links(url, resp):
     print('resp.url: ', resp.url)
     if(resp.status >= 200 and resp.status < 300):
         soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
+
+        aquire_text(url, soup)
+        
         for link in soup.find_all('a'):
             if(is_valid(link.get('href'))):
                 links.append(urldefrag(link.get('href'))[0]) #defragment the url before appending
