@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 from urllib.parse import urldefrag # used to remove the fragment part from url
 from bs4 import BeautifulSoup
 
-from analyze import TextAnalyzer
+from analyze import tokenize
 
 valid_domains = ('.ics.uci.edu', '.cs.uci.edu', '.informatics.uci.edu', '.stat.uci.edu')
 
@@ -12,30 +12,30 @@ valid_domains = ('.ics.uci.edu', '.cs.uci.edu', '.informatics.uci.edu', '.stat.u
 # nb: may need to switch to creating files to hold webpage content if not enough ram?
 #       Alternatively, come up with a more adhoc solution to report
 webpages = dict()
-anaylzer = TextAnalyzer()
 
-def write_report() {
-    try:
-        with open('report.txt', 'w') as report:
-            report.write('Num Unique Pages: ' + len(webpages) + '\n')
 
-            longest_len = -1
-            longest_url = ''
-            for url, words in webpages.items():
-                if len(words) > longest_len:
-                    longest_url = url
-                    longest_len = len(words)
-            report.write('Longest Webpage: ' + longest_url + '\n')
+# def write_report():
+#     try:
+#         with open('report.txt', 'w') as report:
+#             report.write('Num Unique Pages: ' + len(webpages) + '\n')
 
-            # TODO find 50 top words
-            # TODO list ics.uci.edu subdomains
-}
+#             longest_len = -1
+#             longest_url = ''
+#             for url, words in webpages.items():
+#                 if len(words) > longest_len:
+#                     longest_url = url
+#                     longest_len = len(words)
+#             report.write('Longest Webpage: ' + longest_url + '\n')
+
+#             # TODO find 50 top words
+#             # TODO list ics.uci.edu subdomains
+
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
 
     # could find better place for this, but leaving it here for now
-    write_report() # update report statistics as we go
+    # write_report() # update report statistics as we go
     
     return [link for link in links if is_valid(link)]
 
@@ -44,7 +44,8 @@ def scraper(url, resp):
 def aquire_text(url, soup):
     # bsoup stipped_strings gives all strings on page without tags
     # added space keeps words separated after joining
-    webpages[url] = analyze.tokenize(''.join((s + ' ' for s in soup.stripped_strings)))
+    # anaylzer = TextAnalyzer()
+    webpages[url] = tokenize(''.join((s + ' ' for s in soup.stripped_strings)))
 
 def extract_next_links(url, resp):
     # Implementation required.

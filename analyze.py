@@ -1,47 +1,74 @@
-class TextAnalyzer:
+def validate(word): # O(n) where n is the length of the word
+    valid_last_chars = ['.', ',', ';', ':', '?', '!', '\"', '\'']
+    begin_punct = False
+    end_punct = False
+    double_end_punct = False
+    for i,c in enumerate(word):
+        # check if the character is alphaneumeric
+        if (c >= '0' and c <= '9') or (c >= 'A' and c <= 'Z') or (c >= 'a' and c <= 'z'):
+            continue
+        # if it is the last character, and it is a valid ending character, then it token is valid w/o it
+        # ex: 'Hello, world' --> here 'Hello,' ends with a comma, so 'Hello' (w/o comma) is valid
+        elif (i == len(word)-1) and (c in valid_last_chars):
+            end_punct = True
+        # sentences with quotations generally end with a punctuation followed by quotes, so we need
+        # to remove 2 punctions from the last word
+        # ex: Bob said, "This is cool." --> here 'cool."' has 2 punctuations and so the valid token is 'cool'
+        elif (i == len(word)-2) and (c in valid_last_chars) and (word[i+1] in ['\"', '\'']):
+            double_end_punct = True
+        # sentences with quotations also have a starting quote attached with the first word, so we
+        # need to remove those from the word to get a valid token
+        # ex: Bob said, "This is cool." --> here '"This' has a quote attached to it and 'This' is valid
+        # also just a quote by itself is not a valid token, so we make sure that the word length > 1
+        elif (i == 0 and len(word) > 1) and (c in ['\"', '\'']):
+            begin_punct = True
+        # check for hypenated words
+        # also hypen is not a valid starting or ending character so we need to check for that
+        elif (i != 0 and i != len(word)-1) and (c == '-'):
+            continue;
+        # if it is none of the conditions above, we return false
+        else:
+            return False;
     
-    # change according to what kinds of "words" we want
-    # currently set to be only 0-9 || A-Z || a-z
-    def _is_valid_char(self, char) -> bool:
-        val = ord(char[0])
-        return 48 <= val <= 57 or 65 <= val <= 90 or 97 <= val <= 122
-    
-    # takes text string
-    # returns list of "words"
-    # validity of chars in words defined by _is_valid_char
-    def tokenize(self, text : 'str') -> 'list':
-        # init list
-        tokens = []
-        # keep track of characters in a "current token"
-        token = []
-        # check each character
-        for i in range(text):
-            # if character is a valid alphanumeric, it's part of a token
-            if self._is_valid_char(text[i]):
-                # add it to the current token
-                token.append(text[i])
-            # if it's not, then 2 cases:
-            # 1) we have a full token
-            elif len(token) > 0:
-                # add the token to the list
-                tokens.append(''.join(token).lower())
-                # start up a new current token
-                token = []
-            # 2) we have yet to find a new token
-            else:
-                pass
-            # go to the next character
-            i += 1
-        return tokens
-    
-    # takes list of tokens
-    # returns dict of tokens mapped to frequency in list
-    def compute_word_frequencies(self, tokens : 'list') -> 'dict':
-        # init dict
-        freq = dict()
-        # loop through all tokens
-        for t in tokens:
-            # increment frequency of token (setting to 1 if first occurence)
-            freq[t] = freq.get(t, 0) + 1
-        return freq
+    if double_end_punct:
+        word = word[:-2] # remove 2 chars from the back
+    elif end_punct:
+        word = word[:-1] # remove 1 char from the back
+    if begin_punct:
+        word = word[1:] # remove 1 char from the front
+
+    return word;
+
+
+# Read the file line-by-line and process each word and return a list of valid alphanumeric 
+# tokens found in the file
+def tokenize(file): # O(w * n) = O(w) where w is the number of words in the file and n is the length of the word
+    words = []
+    for line in file: # read file line-by-line
+        for word in line.split(): # process each line word-by-word
+            result = validate(word) # validate each word
+            if result != False: # if the word is valid
+                words.append(result.lower()) #append word to the list
+    return words
+
+# returns a dictionary filled with words as key and their frequency as their value
+def computeWordFrequencies(words): # O(w) where w is the number of words in the file
+    freq = {}
+    for word in words:
+        if word in freq.keys(): # if the word is already in the dictionary
+            freq[word] = freq[word] + 1
+        else: # word is not in dictionary, create a new key, value pair
+            freq[word] = 1
+    return freq
+
+# prints the words and frequencies in a sorted descendingly based on values and breaking ties
+# with alphabetical order
+def printFreq(frequencies): # O(m log m) where m is the number of unique words in the file
+    frequencies = dict(sorted(frequencies.items())) # sort by alphabetical order first
+    # sort by frequency in descending order
+    frequencies = dict(sorted(frequencies.items(), key=lambda tup: tup[1], reverse=True)) 
+    # print
+    for word, freq in frequencies.items(): 
+        print(word + "\t" + str(freq))
+
 
