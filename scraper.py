@@ -2,6 +2,7 @@ import re
 from urllib.parse import urlparse
 from urllib.parse import urldefrag # used to remove the fragment part from url
 from bs4 import BeautifulSoup
+import robotparser
 
 valid_domains = ('.ics.uci.edu', '.cs.uci.edu', '.informatics.uci.edu', '.stat.uci.edu')
 
@@ -36,6 +37,10 @@ def is_valid(url):
     # There are already some conditions that return False.
     try:
         parsed = urlparse(url)
+        dom = urlparse(url).netloc  # getting the domain of the url
+        sch = urlparse(url).scheme  # getting the scheme of the url
+        rfile = f'{sch}://{dom}/robots.txt'  # now r is the path of the robots.txt file of the url
+        if
         if parsed.scheme not in set(["http", "https"]):
             return False
         if not(parsed.netloc.endswith(valid_domains)): #check if a url falls within our domains
