@@ -7,22 +7,44 @@ from analyze import TextAnalyzer
 
 valid_domains = ('.ics.uci.edu', '.cs.uci.edu', '.informatics.uci.edu', '.stat.uci.edu')
 
-# {url : text}
+# {url : [words]}
 # can be use for report questions after crawling finished
 # nb: may need to switch to creating files to hold webpage content if not enough ram?
 #       Alternatively, come up with a more adhoc solution to report
 webpages = dict()
+anaylzer = TextAnalyzer()
+
+def write_report() {
+    try:
+        with open('report.txt', 'w') as report:
+            report.write('Num Unique Pages: ' + len(webpages) + '\n')
+
+            longest_len = -1
+            longest_url = ''
+            for url, words in webpages.items():
+                if len(words) > longest_len:
+                    longest_url = url
+                    longest_len = len(words)
+            report.write('Longest Webpage: ' + longest_url + '\n')
+
+            # TODO find 50 top words
+            # TODO list ics.uci.edu subdomains
+}
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
+
+    # could find better place for this, but leaving it here for now
+    write_report() # update report statistics as we go
+    
     return [link for link in links if is_valid(link)]
 
 # use soup parser to get textual content
-# saves textual content as one big string and associate it with url in webpages dict
-def aquire_text(soup):
+# saves textual content as list of words and associate it with url in webpages dict
+def aquire_text(url, soup):
     # bsoup stipped_strings gives all strings on page without tags
     # added space keeps words separated after joining
-    webpages[url] = ''.join((s + ' ' for s in soup.stripped_strings))
+    webpages[url] = analyze.tokenize(''.join((s + ' ' for s in soup.stripped_strings)))
 
 def extract_next_links(url, resp):
     # Implementation required.
