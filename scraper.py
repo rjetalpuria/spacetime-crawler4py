@@ -3,6 +3,7 @@ from urllib.parse import urlparse
 from urllib.parse import urldefrag # used to remove the fragment part from url
 from bs4 import BeautifulSoup
 import urllib.robotparser
+import itertools
 from analyze import tokenize, computeWordFrequencies, addFreq, printTopNFreq
 
 valid_domains = ('.ics.uci.edu', '.cs.uci.edu', '.informatics.uci.edu', '.stat.uci.edu')
@@ -118,3 +119,31 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
+def detect_traps():
+    ## Go throught the entire dictionary webpages() to check the similarity of content between current page and the rest. 
+    ## If the similarity thershold is >= 80%, we do not want to crawl the rest page. 
+    
+    detected_url = ()
+    url_list = list(webpages.items())
+    
+    for idx in range (len(url_list)):
+        detected_url[idx[0]] = True;
+        
+    for x in range(0, len(url_list) - 1):
+        if (detected_url[x] == True):
+            current = url_list[x]
+            current_content = current[1]
+            content_len = len(current_content)
+            for y in range(x + 1, len(url_list)):
+                compare = url_list[y]
+                compare_content = compare[1]
+                ## compare the similarity 
+                compare_length = len(list(set(current_content) & set(compare_content)))
+                if (int((compare_length / content_len * 100)) < 80):
+                    detected_url[current[0]] = True;
+                    detected_url[compare[0]] = True;
+                else:
+                    detected_url[current[0]] = False;
+                    detected_url[compare[0]] = False;
+return detected_url
