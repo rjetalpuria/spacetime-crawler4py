@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 from urllib.parse import urldefrag # used to remove the fragment part from url
 from bs4 import BeautifulSoup
 
-from analyze import tokenize
+from analyze import tokenize, computeWordFrequencies, addFreq, printTopNFreq
 
 valid_domains = ('.ics.uci.edu', '.cs.uci.edu', '.informatics.uci.edu', '.stat.uci.edu')
 
@@ -12,6 +12,10 @@ valid_domains = ('.ics.uci.edu', '.cs.uci.edu', '.informatics.uci.edu', '.stat.u
 # nb: may need to switch to creating files to hold webpage content if not enough ram?
 #       Alternatively, come up with a more adhoc solution to report
 webpages = dict()
+
+# {word : freq}
+# running total of all words/freq found across all 'is_valid' pages
+common_words = dict()
 
 
 # def write_report():
@@ -27,8 +31,12 @@ webpages = dict()
 #                     longest_len = len(words)
 #             report.write('Longest Webpage: ' + longest_url + '\n')
 
-#             # TODO find 50 top words
+#             # find 50 top words
+#             printTopNFreq(common_words, 50)
+
 #             # TODO list ics.uci.edu subdomains
+#     finally:
+#         pass
 
 
 def scraper(url, resp):
@@ -46,6 +54,9 @@ def aquire_text(url, soup):
     # added space keeps words separated after joining
     # anaylzer = TextAnalyzer()
     webpages[url] = tokenize(''.join((s + ' ' for s in soup.stripped_strings)))
+
+def update_common_words(url):
+    addFreq(computeWordFrequencies(webpages[url]), common_words)
 
 def extract_next_links(url, resp):
     # Implementation required.
@@ -67,6 +78,10 @@ def extract_next_links(url, resp):
         
         for link in soup.find_all('a'):
             if(is_valid(link.get('href'))):
+                
+                # after making sure page is not a dup, update common words tally
+                update_common_words(url)
+
                 links.append(urldefrag(link.get('href'))[0]) #defragment the url before appending
     
     return links
