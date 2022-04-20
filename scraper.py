@@ -94,7 +94,7 @@ def is_valid(url):
         parsed = urlparse(url)
         dom = urlparse(url).netloc  # getting the domain of the url
         sch = urlparse(url).scheme  # getting the scheme of the url
-        rop = urllib.robotparser.RobotFileParser()
+        rop = urllib.robotparser.RobotFileParser() # using robotparser
         rfile = f'{sch}://{dom}/robots.txt'  # now r is the path of the robots.txt file of the url
         rop.set_url(rfile)  # reading the robots.txt file
         if not rop.can_fetch("*", rfile):  # checking if we are permitted to read the url
