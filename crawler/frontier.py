@@ -1,5 +1,6 @@
 import os
 import shelve
+import string
 
 from threading import Thread, RLock
 from queue import Queue, Empty
@@ -12,7 +13,8 @@ class Frontier(object):
         self.logger = get_logger("FRONTIER")
         self.config = config
         self.to_be_downloaded = list()
-        
+        self.hash_val = {}  # to store the urls are its respective hash values
+
         if not os.path.exists(self.config.save_file) and not restart:
             # Save file does not exist, but request to load save.
             self.logger.info(
@@ -70,3 +72,16 @@ class Frontier(object):
 
         self.save[urlhash] = (url, True)
         self.save.sync()
+
+    def similarity_detection(self, url, soup):  # returns true if there is a similar page or false otherwise
+        uhash = get_urlhash(url)
+        self.hash_val[uhash] = list()
+        words = ''.join((s + ' ' for s in soup.stripped_strings))
+        translator = str.maketrans('', '', string.punctuation)  # translator to remove the punctuations
+        string_trans = words.translate(translator)  # string without the punctuations
+        temp = zip(*[words[i:] for i in range(0, 3)])  # 3 gram
+        w = [' '.join(ngram) for ngram in temp]  # now we have 3 gram word list
+        # if uhash not in self.hash_val: # if that url is not found in the current list then we add that url and its
+            # respective hash values to out dictionary
+
+
