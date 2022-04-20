@@ -1,6 +1,8 @@
 import itertools
+import string
 
 stopwords = { "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren't", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can't", "cannot", "could", "couldn't", "did", "didn't", "do", "does", "doesn't", "doing", "don't", "down", "during", "each", "few", "for", "from", "further", "had", "hadn't", "has", "hasn't", "have", "haven't", "having", "he", "he'd", "he'll", "he's", "her", "here", "here's", "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", "i'm", "i've", "if", "in", "into", "is", "isn't", "it", "it's", "its", "itself", "let's", "me", "more", "most", "mustn't", "my", "myself", "no", "nor", "not", "of", "off", "on", "once", "only", "or", "other", "ought", "our", "ours", "ourselves", "out", "over", "own", "same", "shan't", "she", "she'd", "she'll", "she's", "should", "shouldn't", "so", "some", "such", "than", "that", "that's", "the", "their", "theirs", "them", "themselves", "then", "there", "there's", "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to", "too", "under", "until", "up", "very", "was", "wasn't", "we", "we'd", "we'll", "we're", "we've", "were", "weren't", "what", "what's", "when", "when's", "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's", "with", "won't", "would", "wouldn't", "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself", "yourselves" }
+hash_val = {}  # to store the urls are its respective hash values
 
 def validate(word): # O(n) where n is the length of the word
     valid_last_chars = ['.', ',', ';', ':', '?', '!', '\"', '\'']
@@ -94,4 +96,41 @@ def printTopNFreq(frequencies, n):
     # print
     for word, freq in itertools.islice(frequencies.items(), n): # itertools islice to limit to first n
         print(word + "\t" + str(freq))
+
+
+def similarity_detection(uhash, soup):  # returns true if there is a similar page or false otherwise
+    hash_val[uhash] = list()
+    words = ''.join((s + ' ' for s in soup.stripped_strings))  # removing all the tags and joining them
+    translator = str.maketrans('', '', string.punctuation)  # translator to remove the punctuations
+    string_trans = words.translate(translator)  # string without the punctuations
+    temp = zip(*[words[i:] for i in range(0, 3)])  # choosing to do 3 gram
+    w = [' '.join(ngram) for ngram in temp]  # now we have 3 gram word list
+    finger_prints = list()  # for temporary storage of the finger_prints
+    # calculating the decimal values of the ngram string and adding it to our dictionary under that url as a list
+    for ngr in w:
+        res = ''.join(format(ord(k), '08b') for k in ngr)  # converting the string into binary
+        dec = int(res, 2)  # converting the string back to decimal
+        if dec % 4 == 0:  # using mod 4 to filter out the decimal values
+            hash_val[uhash].extend(dec)  # we add that value to the list of the url
+
+        # now we iterate through all other hash values of the current url and the urls in the list we have
+        # and calculate the union and the intersection of the files
+        cad_int = 0  # cardinality of intersection
+        cad_union = len(finger_prints)  # cardinality of union - initially set to the length of the fingerprints
+        for key, values in hash_val:
+            if key != uhash:
+                # making sure that we don't we go through the same file again as we have added it
+                cad_union += len(values)  # union of the two lists
+                for val in values:  # iterating through all the values in
+                    if val in finger_prints:
+                        cad_int += 1  # incrementing the cardinality of intersection
+                        cad_union -= 1  # decrementing the cardinality of union
+                if (cad_int / cad_union) * 100 >= 80:  # setting the threshold to 80% of similarity
+                    return True
+                else:  # we go to next file, so retrieve to default values
+                    cad_union = len(finger_prints)
+                    cad_int = 0
+
+        #  there is no similarity we return false
+        return False
 

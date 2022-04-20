@@ -3,7 +3,8 @@ from urllib.parse import urlparse
 from urllib.parse import urldefrag # used to remove the fragment part from url
 from bs4 import BeautifulSoup
 import urllib.robotparser
-from analyze import tokenize, computeWordFrequencies, addFreq, printTopNFreq
+from analyze import tokenize, computeWordFrequencies, addFreq, printTopNFreq, similarity_detection
+from utils import get_urlhash
 
 valid_domains = ('.ics.uci.edu', '.cs.uci.edu', '.informatics.uci.edu', '.stat.uci.edu')
 
@@ -99,12 +100,17 @@ def is_valid(url):
         rop.set_url(rfile)  # reading the robots.txt file
         if not rop.can_fetch("*", rfile):  # checking if we are permitted to read the url
             return False
+        uhash = get_urlhash(url)
+        #  we are checkin the similar detection in this because after this we will add the url to our tbd list
+        # so to prevent the duplicate urls, we are validating in this function.
+        if similarity_detection(uhash, BeautifulSoup):  # if they are similar then we consider it invalid
+            return False
         if parsed.scheme not in set(["http", "https"]):
             return False
         if not(parsed.netloc.endswith(valid_domains)): #check if a url falls within our domains
             return False
         print(urlparse(url))
-        
+
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
