@@ -123,26 +123,27 @@ def similarity_detection(uhash, soup):  # returns true if there is a similar pag
         res = ''.join(format(ord(k), '08b') for k in ngr)  # converting the string into binary
         dec = int(res, 2)  # converting the string back to decimal
         if dec % 4 == 0:  # using mod 4 to filter out the decimal values
-            hash_val[uhash].extend(dec)  # we add that value to the list of the url
+            hash_val[uhash].append(dec)  # we add that value to the list of the url
+            finger_prints.append(dec)
 
-        # now we iterate through all other hash values of the current url and the urls in the list we have
-        # and calculate the union and the intersection of the files
-        cad_int = 0  # cardinality of intersection
-        cad_union = len(finger_prints)  # cardinality of union - initially set to the length of the fingerprints
-        for key, values in hash_val:
-            if key != uhash:
-                # making sure that we don't we go through the same file again as we have added it
-                cad_union += len(values)  # union of the two lists
-                for val in values:  # iterating through all the values in
-                    if val in finger_prints:
-                        cad_int += 1  # incrementing the cardinality of intersection
-                        cad_union -= 1  # decrementing the cardinality of union
-                if (cad_int / cad_union) * 100 >= 80:  # setting the threshold to 80% of similarity
-                    return True
-                else:  # we go to next file, so retrieve to default values
-                    cad_union = len(finger_prints)
-                    cad_int = 0
+    # now we iterate through all other hash values of the current url and the urls in the list we have
+    # and calculate the union and the intersection of the files
+    cad_int = 0  # cardinality of intersection
+    cad_union = len(finger_prints)  # cardinality of union - initially set to the length of the fingerprints
+    for key, values in hash_val.items():
+        if key != uhash:
+            # making sure that we don't we go through the same file again as we have added it
+            cad_union += len(values)  # union of the two lists
+            for val in values:  # iterating through all the values in
+                if val in finger_prints:
+                    cad_int += 1  # incrementing the cardinality of intersection
+                    cad_union -= 1  # decrementing the cardinality of union
+            if (cad_int / cad_union) * 100 >= 80:  # setting the threshold to 80% of similarity
+                return True
+            else:  # we go to next file, so retrieve to default values
+                cad_union = len(finger_prints)
+                cad_int = 0
 
-        #  there is no similarity we return false
-        return False
+    #  there is no similarity we return false
+    return False
 

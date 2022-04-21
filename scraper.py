@@ -1,5 +1,5 @@
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
 from urllib.parse import urldefrag # used to remove the fragment part from url
 from bs4 import BeautifulSoup
 import urllib.robotparser
@@ -98,19 +98,47 @@ def extract_next_links(url, resp):
     if(resp.status >= 200 and resp.status < 300):
         soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
 
-        aquire_text(url, soup)
-        print(webpages[url][:100])
-        
-        for link in soup.find_all('a'):
-            if(is_valid(link.get('href'))):
+        uhash = get_urlhash(url)
+        #  we are checkin the similar detection in this because after this we will add the url to our tbd list
+        # so to prevent the duplicate urls, we are validating in this function.
+        if not similarity_detection(uhash, soup):
+            
+            aquire_text(url, soup)
+            # print(webpages[url][:100]) # debugging
 
-                # after making sure page is not a dup, update common words tally
-                update_common_words(url)
+            # after making sure page is not a dup, update common words tally
+            update_common_words(url)
 
-                # update count of ics subdomains
-                update_ics_sub(url)
+            # update count of ics subdomains
+            update_ics_sub(url)
+            
+            parsed_url = urlparse(url) # get the scheme and domain incase links are relative
+            # loop through all links
+            for link in soup.find_all('a'):
+                href = urldefrag(link.get('href'))[0]
+                # print('processing next url: ' + href) #debug
 
-                links.append(urldefrag(link.get('href'))[0]) #defragment the url before appending
+                # parse the url
+                next_url_parsed = urlparse(href)
+
+                # check how the url is given
+                # make adjustments to get full, absolute url
+                if(not next_url_parsed.path.startswith('/')): # relative to current page
+                    # print('adding current path') #debug
+                    next_url_parsed = next_url_parsed._replace(path = parsed_url.path + next_url_parsed.path) # add the current path
+                if(next_url_parsed.netloc == ''): # relative to root
+                    # print('adding domain') #debug
+                    next_url_parsed = next_url_parsed._replace(netloc = parsed_url.netloc) # add the domain
+                if(next_url_parsed.scheme == ''): # no scheme
+                    # print('adding scheme') #debug
+                    next_url_parsed = next_url_parsed._replace(scheme = parsed_url.scheme) # add the current page's scheme
+
+                # reconstruct the url
+                next_url = urlunparse(next_url_parsed)
+
+                if(is_valid(next_url)): # check if we want to add url to frontier
+                    print('adding url to frontier: ' + next_url) #debug
+                    links.append(next_url) #defragment the url before appending
     
     return links
 
@@ -119,24 +147,22 @@ def is_valid(url):
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
     try:
+        print('checking is valid: ' + url) #debug
         parsed = urlparse(url)
         dom = urlparse(url).netloc  # getting the domain of the url
         sch = urlparse(url).scheme  # getting the scheme of the url
         rop = urllib.robotparser.RobotFileParser() # using robotparser
         rfile = f'{sch}://{dom}/robots.txt'  # now r is the path of the robots.txt file of the url
         rop.set_url(rfile)  # reading the robots.txt file
-        if not rop.can_fetch("*", rfile):  # checking if we are permitted to read the url
+        rop.read()
+        if not rop.can_fetch("*", url):  # checking if we are permitted to read the url
             return False
-        uhash = get_urlhash(url)
-        #  we are checkin the similar detection in this because after this we will add the url to our tbd list
-        # so to prevent the duplicate urls, we are validating in this function.
-        if similarity_detection(uhash, BeautifulSoup):  # if they are similar then we consider it invalid
-            return False
+        # print('robots passed') #debug
         if parsed.scheme not in set(["http", "https"]):
             return False
         if not(parsed.netloc.endswith(valid_domains)): #check if a url falls within our domains
             return False
-        print(urlparse(url))
+        # print(urlparse(url)) #debug
 
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
