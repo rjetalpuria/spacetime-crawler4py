@@ -164,6 +164,12 @@ def is_valid(url):
         sch = urlparse(url).scheme  # getting the scheme of the url
         rop = urllib.robotparser.RobotFileParser() # using robotparser
         rfile = f'{sch}://{dom}/robots.txt'  # now r is the path of the robots.txt file of the url
+        
+        ## Check if the url is ASCII
+        if not (len(rfile) == len(rfile.encode())): 
+            rfile.decode('ascii') # convert the path into ascii if is not in ascii format 
+            # print("Conver to ASCII\n")
+            
         rop.set_url(rfile)  # reading the robots.txt file
         rop.read()
         if not rop.can_fetch("*", url):  # checking if we are permitted to read the url
