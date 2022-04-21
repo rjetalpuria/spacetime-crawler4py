@@ -117,12 +117,16 @@ def extract_next_links(url, resp):
             for link in soup.find_all('a'):
                 href = urldefrag(link.get('href'))[0]
                 # print('processing next url: ' + href) #debug
-
+                if isinstance(href, bytes):
+                    href = href.decode("ascii")
+                
                 # parse the url
                 next_url_parsed = urlparse(href)
 
                 # check how the url is given
                 # make adjustments to get full, absolute url
+                # print(href) 
+                # print(next_url_parsed)
                 if(not next_url_parsed.path.startswith('/')): # relative to current page
                     # print('adding current path') #debug
                     next_url_parsed = next_url_parsed._replace(path = parsed_url.path + next_url_parsed.path) # add the current path
@@ -149,6 +153,13 @@ def is_valid(url):
     try:
         print('checking is valid: ' + url) #debug
         parsed = urlparse(url)
+
+        # print('robots passed') #debug
+        if parsed.scheme not in set(["http", "https"]):
+            return False
+        if not(parsed.netloc.endswith(valid_domains)): #check if a url falls within our domains
+            return False
+        # print(urlparse(url)) #debug
         dom = urlparse(url).netloc  # getting the domain of the url
         sch = urlparse(url).scheme  # getting the scheme of the url
         rop = urllib.robotparser.RobotFileParser() # using robotparser
@@ -157,12 +168,6 @@ def is_valid(url):
         rop.read()
         if not rop.can_fetch("*", url):  # checking if we are permitted to read the url
             return False
-        # print('robots passed') #debug
-        if parsed.scheme not in set(["http", "https"]):
-            return False
-        if not(parsed.netloc.endswith(valid_domains)): #check if a url falls within our domains
-            return False
-        # print(urlparse(url)) #debug
 
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
