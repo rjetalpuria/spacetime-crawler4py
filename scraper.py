@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 from urllib.parse import urldefrag # used to remove the fragment part from url
 from bs4 import BeautifulSoup
 import urllib.robotparser
-from analyze import tokenize, computeWordFrequencies, addFreq, printTopNFreq, similarity_detection
+from analyze import tokenizeText, computeWordFrequencies, addFreq, printTopNFreq, similarity_detection
 from utils import get_urlhash
 
 valid_domains = ('.ics.uci.edu', '.cs.uci.edu', '.informatics.uci.edu', '.stat.uci.edu')
@@ -18,33 +18,43 @@ webpages = dict()
 # running total of all words/freq found across all 'is_valid' pages
 common_words = dict()
 
+# {subdomain : count}
+# running total of ics.uci.edu subdomains found
+ics_subdomains = dict()
 
-# def write_report():
-#     try:
-#         with open('report.txt', 'w') as report:
-#             report.write('Num Unique Pages: ' + len(webpages) + '\n')
+def write_report():
+    try:
+        with open('report.txt', 'w') as report:
+            # num of webpages found
+            report.write('Num Unique Pages: ' + str(len(webpages)) + '\n')
 
-#             longest_len = -1
-#             longest_url = ''
-#             for url, words in webpages.items():
-#                 if len(words) > longest_len:
-#                     longest_url = url
-#                     longest_len = len(words)
-#             report.write('Longest Webpage: ' + longest_url + '\n')
+            # longest webpage in num words
+            # stopwords do not count toward length
+            longest_len = -1
+            longest_url = ''
+            for url, words in webpages.items():
+                if len(words) > longest_len:
+                    longest_url = url
+                    longest_len = len(words)
+            report.write('Longest Webpage: ' + longest_url + '\n')
 
-#             # find 50 top words
-#             printTopNFreq(common_words, 50)
+            # find 50 top words
+            report.write('50 Common Words:\n')
+            printTopNFreq(common_words, 50, report)
 
-#             # TODO list ics.uci.edu subdomains
-#     finally:
-#         pass
+            # list ics.uci.edu subdomains
+            report.write('Num ics subdomains: ' + str(len(ics_subdomains)) + '\n')
+            for sub,cnt in sorted(ics_subdomains.items()):
+                report.write(sub + ', ' + str(cnt) + '\n')
+    finally:
+        pass
 
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
 
     # could find better place for this, but leaving it here for now
-    # write_report() # update report statistics as we go
+    write_report() # update report statistics as we go
     
     return [link for link in links if is_valid(link)]
 
@@ -54,10 +64,23 @@ def aquire_text(url, soup):
     # bsoup stipped_strings gives all strings on page without tags
     # added space keeps words separated after joining
     # anaylzer = TextAnalyzer()
-    webpages[url] = tokenize(''.join((s + ' ' for s in soup.stripped_strings)))
+    webpages[url] = tokenizeText(''.join((s + ' ' for s in soup.stripped_strings)))
 
 def update_common_words(url):
     addFreq(computeWordFrequencies(webpages[url]), common_words)
+
+# checks if domain is subdomain of ics.uci.edu
+def is_ics_sub(dom):
+    return dom.endswith('.ics.uci.edu')
+
+# if the domain is a subdomain, updates the running total
+def update_ics_sub(url):
+    dom = urlparse(url).netloc
+    if is_ics_sub(dom):
+        if dom not in ics_subdomains:
+            ics_subdomains[dom] = 1
+        else:
+            ics_subdomains[dom] += 1
 
 def extract_next_links(url, resp):
     # Implementation required.
@@ -76,12 +99,16 @@ def extract_next_links(url, resp):
         soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
 
         aquire_text(url, soup)
+        print(webpages[url][:100])
         
         for link in soup.find_all('a'):
             if(is_valid(link.get('href'))):
 
                 # after making sure page is not a dup, update common words tally
                 update_common_words(url)
+
+                # update count of ics subdomains
+                update_ics_sub(url)
 
                 links.append(urldefrag(link.get('href'))[0]) #defragment the url before appending
     
