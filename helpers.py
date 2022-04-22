@@ -20,4 +20,27 @@ def load_globals():
         crawler_globals.ics_subdomains = pickle.load(file)
     with open("hash_val.pkl", "rb") as file:
         crawler_globals.hash_val = pickle.load(file)
-    print(">>>webpages: ", len(crawler_globals.webpages))
+
+# use soup parser to get textual content
+# saves textual content as list of words and associate it with url in webpages dict
+def aquire_text(url, soup):
+    # bsoup stipped_strings gives all strings on page without tags
+    # added space keeps words separated after joining
+    # anaylzer = TextAnalyzer()
+    crawler_globals.webpages[url] = tokenizeText(''.join((s + ' ' for s in soup.stripped_strings)))
+
+def update_common_words(url):
+    addFreq(computeWordFrequencies(crawler_globals.webpages[url]), crawler_globals.common_words)
+
+# checks if domain is subdomain of ics.uci.edu
+def is_ics_sub(dom):
+    return dom.endswith('.ics.uci.edu')
+
+# if the domain is a subdomain, updates the running total
+def update_ics_sub(url):
+    dom = urlparse(url).netloc
+    if is_ics_sub(dom):
+        if dom not in crawler_globals.ics_subdomains:
+            crawler_globals.ics_subdomains[dom] = 1
+        else:
+            crawler_globals.ics_subdomains[dom] += 1

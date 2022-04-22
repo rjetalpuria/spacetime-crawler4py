@@ -6,6 +6,7 @@ import urllib.robotparser
 from analyze import tokenizeText, computeWordFrequencies, addFreq, printTopNFreq, similarity_detection
 from utils import get_urlhash
 import crawler_globals
+import helpers
 
 valid_domains = ('.ics.uci.edu', '.cs.uci.edu', '.informatics.uci.edu', '.stat.uci.edu')
 
@@ -46,29 +47,29 @@ def scraper(url, resp):
     
     return links
 
-# use soup parser to get textual content
-# saves textual content as list of words and associate it with url in webpages dict
-def aquire_text(url, soup):
-    # bsoup stipped_strings gives all strings on page without tags
-    # added space keeps words separated after joining
-    # anaylzer = TextAnalyzer()
-    crawler_globals.webpages[url] = tokenizeText(''.join((s + ' ' for s in soup.stripped_strings)))
+# # use soup parser to get textual content
+# # saves textual content as list of words and associate it with url in webpages dict
+# def aquire_text(url, soup):
+#     # bsoup stipped_strings gives all strings on page without tags
+#     # added space keeps words separated after joining
+#     # anaylzer = TextAnalyzer()
+#     crawler_globals.webpages[url] = tokenizeText(''.join((s + ' ' for s in soup.stripped_strings)))
 
-def update_common_words(url):
-    addFreq(computeWordFrequencies(crawler_globals.webpages[url]), crawler_globals.common_words)
+# def update_common_words(url):
+#     addFreq(computeWordFrequencies(crawler_globals.webpages[url]), crawler_globals.common_words)
 
-# checks if domain is subdomain of ics.uci.edu
-def is_ics_sub(dom):
-    return dom.endswith('.ics.uci.edu')
+# # checks if domain is subdomain of ics.uci.edu
+# def is_ics_sub(dom):
+#     return dom.endswith('.ics.uci.edu')
 
-# if the domain is a subdomain, updates the running total
-def update_ics_sub(url):
-    dom = urlparse(url).netloc
-    if is_ics_sub(dom):
-        if dom not in crawler_globals.ics_subdomains:
-            crawler_globals.ics_subdomains[dom] = 1
-        else:
-            crawler_globals.ics_subdomains[dom] += 1
+# # if the domain is a subdomain, updates the running total
+# def update_ics_sub(url):
+#     dom = urlparse(url).netloc
+#     if is_ics_sub(dom):
+#         if dom not in crawler_globals.ics_subdomains:
+#             crawler_globals.ics_subdomains[dom] = 1
+#         else:
+#             crawler_globals.ics_subdomains[dom] += 1
 
 def extract_next_links(url, resp):
     # Implementation required.
@@ -81,8 +82,7 @@ def extract_next_links(url, resp):
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     links = list()
-    print('url: ', url)
-    print('resp.url: ', resp.url)
+    print('extracting links from url: ', url)
     if(resp.status >= 200 and resp.status < 300):
         soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
 
