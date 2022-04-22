@@ -34,7 +34,13 @@ def write_report():
             # list ics.uci.edu subdomains
             report.write('Num ics subdomains: ' + str(len(crawler_globals.ics_subdomains)) + '\n')
             for sub,cnt in sorted(crawler_globals.ics_subdomains.items()):
-                report.write(sub + ', ' + str(cnt) + '\n')
+                report.write(sub + ', ' + str(cnt) + '\n\n')
+
+            # average webpage length
+            total = 0
+            for url, words in crawler_globals.webpages.items():
+                total += len(words)
+            report.write('Average Webpage Length: ' + str(total/len(crawler_globals.webpages)))
     finally:
         pass
 
@@ -90,14 +96,14 @@ def extract_next_links(url, resp):
         #  we are checkin the similar detection in this because after this we will add the url to our tbd list
         # so to prevent the duplicate urls, we are validating in this function.
         if not similarity_detection(uhash, soup):
-            aquire_text(url, soup)
+            helpers.aquire_text(url, soup)
             # print(webpages[url][:100]) #debug
 
             # after making sure page is not a dup, update common words tally
-            update_common_words(url)
+            helpers.update_common_words(url)
 
             # update count of ics subdomains
-            update_ics_sub(url)
+            helpers.update_ics_sub(url)
             
             parsed_url = urlparse(url) # get the scheme and domain incase links are relative
             # loop through all links

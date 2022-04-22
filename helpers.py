@@ -1,5 +1,8 @@
 import pickle
 import crawler_globals
+import analyze
+from urllib.parse import urlparse, urlunparse, urldefrag
+from bs4 import BeautifulSoup
 
 def save_globals():  
     with open("webpages.pkl", "wb") as file:
@@ -27,10 +30,10 @@ def aquire_text(url, soup):
     # bsoup stipped_strings gives all strings on page without tags
     # added space keeps words separated after joining
     # anaylzer = TextAnalyzer()
-    crawler_globals.webpages[url] = tokenizeText(''.join((s + ' ' for s in soup.stripped_strings)))
+    crawler_globals.webpages[url] = analyze.tokenizeText(''.join((s + ' ' for s in soup.stripped_strings)))
 
 def update_common_words(url):
-    addFreq(computeWordFrequencies(crawler_globals.webpages[url]), crawler_globals.common_words)
+    analyze.addFreq(analyze.computeWordFrequencies(crawler_globals.webpages[url]), crawler_globals.common_words)
 
 # checks if domain is subdomain of ics.uci.edu
 def is_ics_sub(dom):
