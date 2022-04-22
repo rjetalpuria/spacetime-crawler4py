@@ -102,8 +102,7 @@ def extract_next_links(url, resp):
         uhash = get_urlhash(url)
         #  we are checkin the similar detection in this because after this we will add the url to our tbd list
         # so to prevent the duplicate urls, we are validating in this function.
-        if not similarity_detection(uhash, soup):
-            
+        if not similarity_detect(uhash, soup):
             aquire_text(url, soup)
             # print(webpages[url][:100]) #debug
 
