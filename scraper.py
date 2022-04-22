@@ -50,7 +50,7 @@ def scraper(url, resp):
 
     # could find better place for this, but leaving it here for now
     write_report() # update report statistics as we go
-    
+
     return links
 
 # # use soup parser to get textual content
@@ -96,23 +96,24 @@ def extract_next_links(url, resp):
         #  we are checkin the similar detection in this because after this we will add the url to our tbd list
         # so to prevent the duplicate urls, we are validating in this function.
         if not similarity_detection(uhash, soup):
-            helpers.aquire_text(url, soup)
-            # print(webpages[url][:100]) #debug
+            # Checking for the quanity of information here so that is the files contain less info then we don't add it
+            # to the file.
+            if not is_less_info(soup):
+                helpers.aquire_text(url, soup)
+                # print(webpages[url][:100]) #debug
+                # after making sure page is not a dup or having less info, update common words tally
+                helpers.update_common_words(url)
 
-            # after making sure page is not a dup, update common words tally
-            helpers.update_common_words(url)
+                # update count of ics subdomains
+                helpers.update_ics_sub(url)
 
-            # update count of ics subdomains
-            helpers.update_ics_sub(url)
-            
-            parsed_url = urlparse(url) # get the scheme and domain incase links are relative
-            # loop through all links
-            for link in soup.find_all('a'):
-                href = urldefrag(link.get('href'))[0]
-                if isinstance(href, bytes):
-                    href = href.decode("ascii")
-                print('processing next url: ' + href) #debug
-                
+                parsed_url = urlparse(url) # get the scheme and domain incase links are relative
+                # loop through all links
+                for link in soup.find_all('a'):
+                    href = urldefrag(link.get('href'))[0]
+                    if isinstance(href, bytes):
+                        href = href.decode("ascii")
+                    print('processing next url: ' + href) #debug
                 # parse the url
                 next_url_parsed = urlparse(href)
 
@@ -136,7 +137,7 @@ def extract_next_links(url, resp):
                 if(is_valid(next_url)): # check if we want to add url to frontier
                     print('adding url to frontier: ' + next_url) #debug
                     links.append(next_url) #defragment the url before appending
-    
+
     return links
 
 def is_valid(url):
@@ -159,12 +160,12 @@ def is_valid(url):
         sch = urlparse(url).scheme  # getting the scheme of the url
         rop = urllib.robotparser.RobotFileParser() # using robotparser
         rfile = f'{sch}://{dom}/robots.txt'  # now r is the path of the robots.txt file of the url
-        
+
         ## Check if the url is ASCII
-        if not (len(rfile) == len(rfile.encode())): 
-            rfile.decode('ascii') # convert the path into ascii if is not in ascii format 
+        if not (len(rfile) == len(rfile.encode())):
+            rfile.decode('ascii') # convert the path into ascii if is not in ascii format
             # print("Conver to ASCII\n")
-            
+
         rop.set_url(rfile)  # reading the robots.txt file
         rop.read()
         if not rop.can_fetch("*", url):  # checking if we are permitted to read the url
@@ -184,3 +185,13 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
+
+def is_less_info(soup):
+    tokens = tokenizeText(''.join((s + ' ' for s in soup.stripped_strings)))  # first tokenizing the text
+    # we are taking the threshold to be 100 tokens that is if the tokens list has less than 100 tokens then
+    # the file is considered to be the one with the less information.
+    if (len(tokens)) <= 100:
+        return True
+    else:
+        return False
