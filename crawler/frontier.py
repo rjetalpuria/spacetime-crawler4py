@@ -7,6 +7,8 @@ from queue import Queue, Empty
 
 from utils import get_logger, get_urlhash, normalize
 from scraper import is_valid
+import crawler_globals
+import helpers
 
 class Frontier(object):
     def __init__(self, config, restart):
@@ -28,9 +30,15 @@ class Frontier(object):
         # Load existing save file, or create one if it does not exist.
         self.save = shelve.open(self.config.save_file)
         if restart:
+            helpers.save_globals() # write empty globals -- reset
             for url in self.config.seed_urls:
                 self.add_url(url)
         else:
+            if os.path.exists('webpages.pkl') and os.path.exists('common_words.pkl') and os.path.exists('ics_subdomains.pkl') and os.path.exists('hash_val.pkl'):
+                helpers.load_globals()
+            else:
+                print("Pickle files for globals not found")
+                helpers.save_globals() # write empty globals -- reset
             # Set the frontier state with contents of save file.
             self._parse_save_file()
             if not self.save:

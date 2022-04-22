@@ -5,6 +5,8 @@ from utils.download import download
 from utils import get_logger
 import scraper
 import time
+import crawler_globals
+import helpers
 
 from urllib.parse import urlparse
 
@@ -26,6 +28,7 @@ class Worker(Thread):
             if not tbd_url:
                 self.logger.info("Frontier is empty. Stopping Crawler.")
                 break
+            helpers.save_globals() # save globals before every request (in case, server down)
             domain = urlparse(tbd_url).netloc
             if domain in last_queried and last_queried[domain] - time.time() < 1: # if it has been less than 1 second from the last time we queried this domain
                 time.sleep(1) #sleep for 1 second regardless of the amount of time

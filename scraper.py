@@ -5,34 +5,21 @@ from bs4 import BeautifulSoup
 import urllib.robotparser
 from analyze import tokenizeText, computeWordFrequencies, addFreq, printTopNFreq, similarity_detection
 from utils import get_urlhash
+import crawler_globals
 
 valid_domains = ('.ics.uci.edu', '.cs.uci.edu', '.informatics.uci.edu', '.stat.uci.edu')
-
-# {url : [words]}
-# can be use for report questions after crawling finished
-# nb: may need to switch to creating files to hold webpage content if not enough ram?
-#       Alternatively, come up with a more adhoc solution to report
-webpages = dict()
-
-# {word : freq}
-# running total of all words/freq found across all 'is_valid' pages
-common_words = dict()
-
-# {subdomain : count}
-# running total of ics.uci.edu subdomains found
-ics_subdomains = dict()
 
 def write_report():
     try:
         with open('report.txt', 'w') as report:
             # num of webpages found
-            report.write('Num Unique Pages: ' + str(len(webpages)) + '\n\n')
+            report.write('Num Unique Pages: ' + str(len(crawler_globals.webpages)) + '\n\n')
 
             # longest webpage in num words
             # stopwords do not count toward length
             longest_len = -1
             longest_url = ''
-            for url, words in webpages.items():
+            for url, words in crawler_globals.webpages.items():
                 if len(words) > longest_len:
                     longest_url = url
                     longest_len = len(words)
@@ -40,12 +27,12 @@ def write_report():
 
             # find 50 top words
             report.write('50 Common Words:\n')
-            printTopNFreq(common_words, 50, report)
+            printTopNFreq(crawler_globals.common_words, 50, report)
             report.write('\n')
 
             # list ics.uci.edu subdomains
-            report.write('Num ics subdomains: ' + str(len(ics_subdomains)) + '\n')
-            for sub,cnt in sorted(ics_subdomains.items()):
+            report.write('Num ics subdomains: ' + str(len(crawler_globals.ics_subdomains)) + '\n')
+            for sub,cnt in sorted(crawler_globals.ics_subdomains.items()):
                 report.write(sub + ', ' + str(cnt) + '\n')
     finally:
         pass
@@ -65,10 +52,10 @@ def aquire_text(url, soup):
     # bsoup stipped_strings gives all strings on page without tags
     # added space keeps words separated after joining
     # anaylzer = TextAnalyzer()
-    webpages[url] = tokenizeText(''.join((s + ' ' for s in soup.stripped_strings)))
+    crawler_globals.webpages[url] = tokenizeText(''.join((s + ' ' for s in soup.stripped_strings)))
 
 def update_common_words(url):
-    addFreq(computeWordFrequencies(webpages[url]), common_words)
+    addFreq(computeWordFrequencies(crawler_globals.webpages[url]), crawler_globals.common_words)
 
 # checks if domain is subdomain of ics.uci.edu
 def is_ics_sub(dom):
@@ -78,10 +65,10 @@ def is_ics_sub(dom):
 def update_ics_sub(url):
     dom = urlparse(url).netloc
     if is_ics_sub(dom):
-        if dom not in ics_subdomains:
-            ics_subdomains[dom] = 1
+        if dom not in crawler_globals.ics_subdomains:
+            crawler_globals.ics_subdomains[dom] = 1
         else:
-            ics_subdomains[dom] += 1
+            crawler_globals.ics_subdomains[dom] += 1
 
 def extract_next_links(url, resp):
     # Implementation required.
@@ -154,7 +141,7 @@ def is_valid(url):
         print('checking is valid: ' + url) #debug
         parsed = urlparse(url)
 
-        if url in webpages: # simple 'have we been here before' check
+        if url in crawler_globals.webpages: # simple 'have we been here before' check
             return False
         if parsed.scheme not in set(["http", "https"]):
             return False
