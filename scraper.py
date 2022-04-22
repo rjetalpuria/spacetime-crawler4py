@@ -57,7 +57,7 @@ def scraper(url, resp):
     # could find better place for this, but leaving it here for now
     write_report() # update report statistics as we go
     
-    return [link for link in links if is_valid(link)]
+    return links
 
 # use soup parser to get textual content
 # saves textual content as list of words and associate it with url in webpages dict
