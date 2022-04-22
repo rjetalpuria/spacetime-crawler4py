@@ -138,6 +138,8 @@ def similarity_detection(uhash, soup):  # returns true if there is a similar pag
                 if val in finger_prints:
                     cad_int += 1  # incrementing the cardinality of intersection
                     cad_union -= 1  # decrementing the cardinality of union
+            if cad_union == 0: # cad_union == 0 iff len(finger_prints) == len(values) == 0 => we're comparing 2 empty lists, similarity = 100%!
+                return True
             if (cad_int / cad_union) * 100 >= 80:  # setting the threshold to 80% of similarity
                 return True
             else:  # we go to next file, so retrieve to default values
