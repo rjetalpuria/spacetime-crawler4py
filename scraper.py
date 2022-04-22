@@ -26,7 +26,7 @@ def write_report():
     try:
         with open('report.txt', 'w') as report:
             # num of webpages found
-            report.write('Num Unique Pages: ' + str(len(webpages)) + '\n')
+            report.write('Num Unique Pages: ' + str(len(webpages)) + '\n\n')
 
             # longest webpage in num words
             # stopwords do not count toward length
@@ -36,11 +36,12 @@ def write_report():
                 if len(words) > longest_len:
                     longest_url = url
                     longest_len = len(words)
-            report.write('Longest Webpage: ' + longest_url + '\n')
+            report.write('Longest Webpage: ' + longest_url + '\n\n')
 
             # find 50 top words
             report.write('50 Common Words:\n')
             printTopNFreq(common_words, 50, report)
+            report.write('\n')
 
             # list ics.uci.edu subdomains
             report.write('Num ics subdomains: ' + str(len(ics_subdomains)) + '\n')
@@ -104,7 +105,7 @@ def extract_next_links(url, resp):
         if not similarity_detection(uhash, soup):
             
             aquire_text(url, soup)
-            # print(webpages[url][:100]) # debugging
+            # print(webpages[url][:100]) #debug
 
             # after making sure page is not a dup, update common words tally
             update_common_words(url)
@@ -116,9 +117,9 @@ def extract_next_links(url, resp):
             # loop through all links
             for link in soup.find_all('a'):
                 href = urldefrag(link.get('href'))[0]
-                # print('processing next url: ' + href) #debug
                 if isinstance(href, bytes):
                     href = href.decode("ascii")
+                print('processing next url: ' + href) #debug
                 
                 # parse the url
                 next_url_parsed = urlparse(href)
@@ -128,13 +129,13 @@ def extract_next_links(url, resp):
                 # print(href) 
                 # print(next_url_parsed)
                 if(not next_url_parsed.path.startswith('/')): # relative to current page
-                    # print('adding current path') #debug
+                    print('adding current path') #debug
                     next_url_parsed = next_url_parsed._replace(path = parsed_url.path + next_url_parsed.path) # add the current path
                 if(next_url_parsed.netloc == ''): # relative to root
-                    # print('adding domain') #debug
+                    print('adding domain') #debug
                     next_url_parsed = next_url_parsed._replace(netloc = parsed_url.netloc) # add the domain
                 if(next_url_parsed.scheme == ''): # no scheme
-                    # print('adding scheme') #debug
+                    print('adding scheme') #debug
                     next_url_parsed = next_url_parsed._replace(scheme = parsed_url.scheme) # add the current page's scheme
 
                 # reconstruct the url
@@ -154,7 +155,8 @@ def is_valid(url):
         print('checking is valid: ' + url) #debug
         parsed = urlparse(url)
 
-        # print('robots passed') #debug
+        if url in webpages: # simple 'have we been here before' check
+            return False
         if parsed.scheme not in set(["http", "https"]):
             return False
         if not(parsed.netloc.endswith(valid_domains)): #check if a url falls within our domains
@@ -174,6 +176,7 @@ def is_valid(url):
         rop.read()
         if not rop.can_fetch("*", url):  # checking if we are permitted to read the url
             return False
+        # print('robots passed') #debug
 
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"

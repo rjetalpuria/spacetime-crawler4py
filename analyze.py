@@ -107,7 +107,7 @@ def printTopNFreq(frequencies, n, file = sys.stdout):
     frequencies = dict(sorted(frequencies.items(), key=lambda tup: tup[1], reverse=True))
     # print
     for word, freq in itertools.islice(frequencies.items(), n): # itertools islice to limit to first n
-        file.write(word + "\t" + str(freq))
+        file.write(word + "\t" + str(freq) + '\n')
 
 
 def similarity_detection(uhash, soup):  # returns true if there is a similar page or false otherwise
