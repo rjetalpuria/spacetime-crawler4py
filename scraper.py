@@ -93,28 +93,27 @@ def extract_next_links(url, resp):
         soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
 
         uhash = get_urlhash(url)
+        
         #  we are checkin the similar detection in this because after this we will add the url to our tbd list
         # so to prevent the duplicate urls, we are validating in this function.
-        if not similarity_detection(uhash, soup):
-            # Checking for the quanity of information here so that is the files contain less info then we don't add it
-            # to the file.
-            if not is_less_info(soup):
-                helpers.aquire_text(url, soup)
-                # print(webpages[url][:100]) #debug
-                # after making sure page is not a dup or having less info, update common words tally
-                helpers.update_common_words(url)
+        if not is_less_info(soup) and not similarity_detection(uhash, soup):
+            helpers.aquire_text(url, soup)
+            # print(webpages[url][:100]) #debug
 
-                # update count of ics subdomains
-                helpers.update_ics_sub(url)
+            # after making sure page is not a dup, update common words tally
+            helpers.update_common_words(url)
 
-                parsed_url = urlparse(url) # get the scheme and domain incase links are relative
-                # loop through all links
-                for link in soup.find_all('a'):
-                    href = urldefrag(link.get('href'))[0]
-                    if isinstance(href, bytes):
-                        href = href.decode("ascii")
-                    print('processing next url: ' + href) #debug
-                # parse the url
+            # update count of ics subdomains
+            helpers.update_ics_sub(url)
+
+            parsed_url = urlparse(url) # get the scheme and domain incase links are relative
+            # loop through all links
+            for link in soup.find_all('a'):
+                href = urldefrag(link.get('href'))[0]
+                if isinstance(href, bytes):
+                    href = href.decode("ascii")
+                print('processing next url: ' + href) #debug
+                
                 next_url_parsed = urlparse(href)
 
                 # check how the url is given
