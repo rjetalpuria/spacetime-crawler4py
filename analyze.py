@@ -65,7 +65,7 @@ def tokenizeText(text):
     words = []
     for word in text.split(): # process each line word-by-word
         result = validate(word) # validate each word
-        if result != False: # if the word is valid
+        if result != False and len(result) != 0: # if the word is valid and to eliminate empty character
             words.append(result) #append word to the list
     return words
 
