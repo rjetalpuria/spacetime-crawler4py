@@ -7,6 +7,7 @@ from analyze import tokenizeText, computeWordFrequencies, addFreq, printTopNFreq
 from utils import get_urlhash
 import crawler_globals
 import helpers
+from urllib.error import URLError
 
 valid_domains = ('.ics.uci.edu', '.cs.uci.edu', '.informatics.uci.edu', '.stat.uci.edu')
 
@@ -144,11 +145,14 @@ def is_valid(url):
             # print("Conver to ASCII\n")
 
         rop.set_url(rfile)  # reading the robots.txt file
-        rop.read()
-        if not rop.can_fetch("*", url):  # checking if we are permitted to read the url
-            return False
+        try:
+            rop.read()
+            if not rop.can_fetch("*", url):  # checking if we are permitted to read the url
+                return False
         # print('robots passed') #debug
-
+        except URLError:
+            print("URLError occured while parsing robots.txt")
+            
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
