@@ -53,30 +53,6 @@ def scraper(url, resp):
 
     return links
 
-# # use soup parser to get textual content
-# # saves textual content as list of words and associate it with url in webpages dict
-# def aquire_text(url, soup):
-#     # bsoup stipped_strings gives all strings on page without tags
-#     # added space keeps words separated after joining
-#     # anaylzer = TextAnalyzer()
-#     crawler_globals.webpages[url] = tokenizeText(''.join((s + ' ' for s in soup.stripped_strings)))
-
-# def update_common_words(url):
-#     addFreq(computeWordFrequencies(crawler_globals.webpages[url]), crawler_globals.common_words)
-
-# # checks if domain is subdomain of ics.uci.edu
-# def is_ics_sub(dom):
-#     return dom.endswith('.ics.uci.edu')
-
-# # if the domain is a subdomain, updates the running total
-# def update_ics_sub(url):
-#     dom = urlparse(url).netloc
-#     if is_ics_sub(dom):
-#         if dom not in crawler_globals.ics_subdomains:
-#             crawler_globals.ics_subdomains[dom] = 1
-#         else:
-#             crawler_globals.ics_subdomains[dom] += 1
-
 def extract_next_links(url, resp):
     # Implementation required.
     # url: the URL that was used to get the page
@@ -94,14 +70,18 @@ def extract_next_links(url, resp):
 
         uhash = get_urlhash(url)
         
-        #  we are checkin the similar detection in this because after this we will add the url to our tbd list
-        # so to prevent the duplicate urls, we are validating in this function.
-        if not is_less_info(soup) and not similarity_detection(uhash, soup):
-            helpers.aquire_text(url, soup)
+        # gathering information to quantify information of this page
+        tokens = tokenizeText(''.join((s + ' ' for s in soup.stripped_strings)))
+        commons = computeWordFrequencies(tokens)
+        
+        # we would crawl if there is 50 unique tokens (excluding stopwords)
+        # and it is not similar to other pages
+        if len(commons) > 50 and not similarity_detection(uhash, soup):
+            helpers.acquire_text(url, tokens)
             # print(webpages[url][:100]) #debug
 
             # after making sure page is not a dup, update common words tally
-            helpers.update_common_words(url)
+            helpers.update_common_words(url, commons)
 
             # update count of ics subdomains
             helpers.update_ics_sub(url)
@@ -118,8 +98,6 @@ def extract_next_links(url, resp):
 
                 # check how the url is given
                 # make adjustments to get full, absolute url
-                # print(href) 
-                # print(next_url_parsed)
                 if(not next_url_parsed.path.startswith('/')): # relative to current page
                     print('adding current path') #debug
                     next_url_parsed = next_url_parsed._replace(path = parsed_url.path + next_url_parsed.path) # add the current path
@@ -184,13 +162,3 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
-
-
-def is_less_info(soup):
-    tokens = tokenizeText(''.join((s + ' ' for s in soup.stripped_strings)))  # first tokenizing the text
-    # we are taking the threshold to be 100 tokens that is if the tokens list has less than 100 tokens then
-    # the file is considered to be the one with the less information.
-    if (len(tokens)) <= 100:
-        return True
-    else:
-        return False

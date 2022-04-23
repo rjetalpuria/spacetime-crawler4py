@@ -26,14 +26,14 @@ def load_globals():
 
 # use soup parser to get textual content
 # saves textual content as list of words and associate it with url in webpages dict
-def aquire_text(url, soup):
+def acquire_text(url, tokens):
     # bsoup stipped_strings gives all strings on page without tags
     # added space keeps words separated after joining
     # anaylzer = TextAnalyzer()
-    crawler_globals.webpages[url] = analyze.tokenizeText(''.join((s + ' ' for s in soup.stripped_strings)))
+    crawler_globals.webpages[url] = tokens
 
-def update_common_words(url):
-    analyze.addFreq(analyze.computeWordFrequencies(crawler_globals.webpages[url]), crawler_globals.common_words)
+def update_common_words(url, commons):
+    analyze.addFreq(commons, crawler_globals.common_words)
 
 # checks if domain is subdomain of ics.uci.edu
 def is_ics_sub(dom):
