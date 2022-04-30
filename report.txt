@@ -1,0 +1,64 @@
+Num Unique Pages: 947
+
+Longest Webpage: https://gitlab.ics.uci.edu/mars-research/ksplit/DataStructureAnalysis/-/commit/91117819c67545ca6ab2e5ef10fc15ade0402744?expanded=1&page=2
+
+50 Common Words:
+0	3448
+repository	2354
+commits	2033
+gitlab	1923
+sidebar	1836
+help	1677
+wiki	1671
+graph	1663
+hans	1600
+merge	1561
+analytics	1423
+project	1413
+return	1381
+support	1344
+files	1313
+issues	1272
+requests	1268
+issue	1246
+activity	1242
+jobs	1235
+new	1223
+boards	1204
+file	1192
+const	1155
+value	1058
+ics	1051
+members	1035
+snippets	897
+content	894
+skip	888
+open	866
+clone	856
+n	839
+overview	826
+projects	823
+list	808
+operations	794
+create	760
+code	754
+haskell	739
+service	738
+v	736
+will	707
+information	696
+sign	675
+function	674
+show	654
+announcements	649
+heros	647
+changes	645
+
+Num ics subdomains: 5
+gitlab.ics.uci.edu, 647
+grape.ics.uci.edu, 18
+speedtest.ics.uci.edu, 1
+swiki.ics.uci.edu, 271
+www.ics.uci.edu, 7
+
+Average Webpage Length: 223.75712777191129

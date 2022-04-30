@@ -35,8 +35,8 @@ def write_report():
             # list ics.uci.edu subdomains
             report.write('Num ics subdomains: ' + str(len(crawler_globals.ics_subdomains)) + '\n')
             for sub,cnt in sorted(crawler_globals.ics_subdomains.items()):
-                report.write(sub + ', ' + str(cnt) + '\n\n')
-
+                report.write(sub + ', ' + str(cnt) + '\n')
+            report.write('\n')
             # average webpage length
             total = 0
             for url, words in crawler_globals.webpages.items():
@@ -66,18 +66,18 @@ def extract_next_links(url, resp):
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     links = list()
     print('extracting links from url: ', url)
-    if(resp.status >= 200 and resp.status < 300):
-        soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
-
+    if(resp.status >= 200 and resp.status < 300 and resp.raw_response is not None and resp.raw_response.content is not None):
+        # soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
+        soup = BeautifulSoup(resp.raw_response.content, 'html.parser', from_encoding="iso-8859-1")
         uhash = get_urlhash(url)
         
         # gathering information to quantify information of this page
         tokens = tokenizeText(''.join((s + ' ' for s in soup.stripped_strings)))
         commons = computeWordFrequencies(tokens)
         
-        # we would crawl if there is 50 unique tokens (excluding stopwords)
+        # we would crawl if there is 15 unique tokens (excluding stopwords)
         # and it is not similar to other pages
-        if len(commons) > 50 and not similarity_detection(uhash, soup):
+        if len(commons) > 15 and not similarity_detection(uhash, soup):
             helpers.acquire_text(url, tokens)
             # print(webpages[url][:100]) #debug
 
@@ -101,7 +101,7 @@ def extract_next_links(url, resp):
                 # make adjustments to get full, absolute url
                 if(not next_url_parsed.path.startswith('/')): # relative to current page
                     print('adding current path') #debug
-                    next_url_parsed = next_url_parsed._replace(path = parsed_url.path + next_url_parsed.path) # add the current path
+                    next_url_parsed = next_url_parsed._replace(path = parsed_url.path + '/' + next_url_parsed.path) # add the current path
                 if(next_url_parsed.netloc == ''): # relative to root
                     print('adding domain') #debug
                     next_url_parsed = next_url_parsed._replace(netloc = parsed_url.netloc) # add the domain
